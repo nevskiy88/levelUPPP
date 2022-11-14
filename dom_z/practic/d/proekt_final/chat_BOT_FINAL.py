@@ -3,35 +3,40 @@ from telebot import types
 from openpyxl import load_workbook
 import openpyxl
 
-def append_primechanie():
-    fn = 'comand.xlsx'
-    wb = load_workbook(fn)
-    ws = wb['список1']
-    a = input(" Название пробы: ")
-    for i in range(1, ws.max_row):
-        if a in ws['A' + str(i)].value:
-            ws["C" +str(i)] = input("Введите примечание: ")
-    wb.save(fn)
-    wb.close
 
-def append_proba():
-    fn = 'comand.xlsx'
-    wb = load_workbook(fn)
-    ws = wb['список1']
-    a = input(" Название: ")
-    b = input(" тара: ")
-    c = input(" примечание: ")
-    d = input(" где: ")
-    e = input(" место: ")
-    ws.append([(a),(b),(c),(d),(e)])
-    wb.save(fn)
-    wb.close
+bot = telebot.TeleBot("5694149799:AAGgg--xq5E1ejnGZFiHZLqagir5x3gDVZc")
+@bot.message_handler(commands=["start"])
+def button(message):
+    markup = types.InlineKeyboardMarkup(row_width=3)
+    item1 = types.InlineKeyboardButton("Поиск пробы",callback_data='question_1')
+    item2 = types.InlineKeyboardButton("Добавить Примечание к пробе", callback_data='question_2')
+    item3 = types.InlineKeyboardButton("Добавить новую пробу", callback_data='question_3')
+    markup.add(item1, item2, item3)
 
-def proba():
-    file = openpyxl.reader.excel.load_workbook(filename='Morgeo.xlsx')
-    sheet = file['Опись']
-    proba_number = input("введите название пробы: ")
-    for i in range(2, sheet.max_row):
+    bot.send_message(message.chat.id, 'Привет, программа создана для работы по поиску нужной информации из таблицы EXCEL,/'
+                                      ' также есть возможность добавления новой пробы в конец таблицы и внесение заметки в графу ПРИМЕЧАНИЕ /'
+                                      ' уже существующих проб', reply_markup=markup)
+
+@bot.callback_query_handler(func=lambda call: [True])
+def callback(call):
+    if call.message:
+        if call.data == 'question_1':
+            file = openpyxl.reader.excel.load_workbook(filename='Morgeo.xlsx')
+            sheet = file['Опись']
+            bot.send_message(call.message.chat.id, ' Введите пробу: ')
+            bot.register_next_step_handler(call.message, text_1, sheet)
+
+        elif call.data == 'question_2':
+            bot.send_message(call.message.chat.id, ' Введите пробу полностью: ')
+            bot.register_next_step_handler(call.message, text_2)
+
+        elif call.data == 'question_3':
+            bot.send_message(call.message.chat.id, ' Введите название новой пробы: ')
+            bot.register_next_step_handler(call.message, text_A)
+def text_1(message, sheet):
+    proba_number = message.text
+    res = ""
+    for i in range(2, sheet.max_row + 1):
         if sheet['A' + str(i)].value is None:
             break
         if proba_number in sheet['A' + str(i)].value:
@@ -40,28 +45,69 @@ def proba():
             d = sheet['D' + str(i)].value or "-"
             e = sheet['E' + str(i)].value or "-"
             f = sheet['F' + str(i)].value or "-"
-            print(f" НАЗВАНИЕ: {sheet['A' + str(i)].value}, ТАРА: {b} ПРОЕКТ:{c} РЕГИОН: {d} ПРИМЕЧАНИЕ: {e} ГДЕ: {f}")
+            res += f" НАЗВАНИЕ: {sheet['A' + str(i)].value}, ТАРА: {b} ПРОЕКТ:{c} РЕГИОН: {d} ПРИМЕЧАНИЕ: {e} ГДЕ: {f}\n "
+
+    bot.send_message(message.chat.id, res)
 
 
-bot = telebot.TeleBot("5694149799:AAGgg--xq5E1ejnGZFiHZLqagir5x3gDVZc")
-@bot.message_handler(commands=["start"])
-def button(message):
-    markup = types.InlineKeyboardMarkup(row_width=3)
-    item1 = types.InlineKeyboardButton("Поиск пробы",callback_data='question_1')
-    item2 = types.InlineKeyboardButton("Добавить Примечание к пробе", callback_data='question_2')
-    item3 = types.InlineKeyboardButton("Добавить новую пробу", callback_data='question_1')
-    markup.add(item1, item2, item3)
+def text_2(message):
+    proba_number = message.text
+    bot.send_message(message.chat.id, ' введите примечание: ')
+    bot.register_next_step_handler(message, text_22, proba_number)
+def text_22(message, proba_number):
+    primechanie = message.text
+    fn = 'Morgeo.xlsx'
+    wb = load_workbook(fn)
+    ws = wb['Опись']
+    for i in range(2, ws.max_row):
+        if ws['A' + str(i)].value is None:
+            break
+        if proba_number in ws['A' + str(i)].value:
+            ws["E" + str(i)] = primechanie
+    bot.send_message(message.chat.id, f'Примечание:  {primechanie} - добавлено в пробу: {proba_number}')
+    wb.save(fn)
+    wb.close
 
-    bot.send_message(message.chat.id, 'Привет, программа создана для работы по поиску нужной информации из таблицы EXCEL, также есть возможность добавления новой пробы в конец таблицы и внесение заметки в графу ПРИМЕЧАНИЕ уже существующих проб', reply_markup=markup)
-@bot.callback_query_handlers(func = lambda call: True)
-def callback(call):
-    if call.message:
-        if call.data == 'question_2':
-            append_primechanie()
-        elif call.data == 'question_3':
-            append_proba()
-        elif call.data == 'question_1':
-            proba()
+def text_A(message):
+    name = message.text
+    print(name)
+    bot.send_message(message.chat.id, ' введите Тару: ')
+    bot.register_next_step_handler(message, text_B, name)
+
+def text_B(message, name):
+    tara = message.text
+    print(tara)
+    bot.send_message(message.chat.id, ' введите Проект: ')
+    bot.register_next_step_handler(message, text_C, name, tara )
+
+def text_C(message, name, tara):
+    proekt = message.text
+    print(proekt)
+    bot.send_message(message.chat.id, ' введите Регион: ')
+    bot.register_next_step_handler(message, text_D, name, tara, proekt)
+
+def text_D(message, name, tara, proekt):
+    region = message.text
+    print(region)
+    bot.send_message(message.chat.id, ' введите Примечание: ')
+    bot.register_next_step_handler(message, text_E, name,tara, proekt, region )
+
+def text_E(message, name,tara, proekt, region):
+    primech = message.text
+    print(primech)
+    bot.send_message(message.chat.id, ' Где хранится: ')
+    bot.register_next_step_handler(message, text_3, name, tara, proekt, region, primech)
+
+def text_3(message, name, tara, proekt, region, primech):
+    gde = message.text
+    print(gde)
+    fn = 'Morgeo.xlsx'
+    wb = load_workbook(fn)
+    ws = wb['Опись']
+    ws.append([(name), (tara), (proekt), (region), (primech), (gde)])
+    bot.send_message(message.chat.id, f' Проба: {name}, Тара: {tara}, Проект: {proekt}, Регион: {region}, Примечание: {primech}, Где находится: {gde}  --- добавлена а базу ')
+    wb.save(fn)
+    wb.close
 
 bot.infinity_polling()
 
