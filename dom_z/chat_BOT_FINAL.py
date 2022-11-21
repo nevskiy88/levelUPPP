@@ -75,10 +75,10 @@ def text_22(message, proba_number):
             bot.send_message(message.chat.id, f'Примечание:  {primechanie} - добавлено в пробу: {proba_number}')
             wb.save(fn)
             wb.close()
-            break
-        else:
-            bot.send_message(message.chat.id, f'{proba_number} - не существует, проверьте название пробы')
-            break
+
+        # else:
+        #     bot.send_message(message.chat.id, f'{proba_number} - не существует, проверьте название пробы')
+
 
 def text_A(message):
     name = message.text.upper()
