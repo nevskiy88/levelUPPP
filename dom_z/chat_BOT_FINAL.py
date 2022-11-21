@@ -13,7 +13,7 @@ def button(message):
     item1 = types.InlineKeyboardButton("Поиск пробы",callback_data='question_1')
     item2 = types.InlineKeyboardButton("Добавить Примечание к пробе", callback_data='question_2')
     item3 = types.InlineKeyboardButton("Добавить новую пробу", callback_data='question_3')
-    markup.add(item1, item2, item)
+    markup.add(item1, item2, item3)
 
     bot.send_message(message.chat.id, 'Привет, программа создана для работы по поиску нужной информации из таблицы EXCEL,'
                                       ' также есть возможность добавления новой пробы в конец таблицы и внесение заметки в графу ПРИМЕЧАНИЕ '
